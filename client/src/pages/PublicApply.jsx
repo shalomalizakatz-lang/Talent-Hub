@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea, Checkbox } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
+import { getSuggestedSkills } from '../skillSuggestions.js';
 
 const EMPTY = {
   name: '',
@@ -106,9 +107,13 @@ export function PublicApply() {
           </Field>
         </div>
 
-        <Field label="Skills">
-          <TagInput value={form.skills} onChange={(v) => set('skills', v)} placeholder="Type a skill, press Enter" />
-        </Field>
+        <TagInput
+          label="Skills"
+          value={form.skills}
+          onChange={(v) => set('skills', v)}
+          placeholder="Type a skill, press Enter"
+          suggestions={getSuggestedSkills(form.target_role, form.skills)}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Location">

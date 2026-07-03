@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea, Select } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
+import { getSuggestedSkills } from '../skillSuggestions.js';
 import { OPPORTUNITY_STATUSES, OPPORTUNITY_STATUS_LABELS } from '../constants.js';
 
 const EMPTY = {
@@ -88,13 +89,13 @@ export function OpportunityForm() {
           </Field>
         </div>
 
-        <Field label="Required skills">
-          <TagInput
-            value={form.required_skills}
-            onChange={(v) => set('required_skills', v)}
-            placeholder="Type a skill, press Enter"
-          />
-        </Field>
+        <TagInput
+          label="Required skills"
+          value={form.required_skills}
+          onChange={(v) => set('required_skills', v)}
+          placeholder="Type a skill, press Enter"
+          suggestions={getSuggestedSkills(form.title, form.required_skills)}
+        />
 
         <Field label="Location">
           <TextInput value={form.location || ''} onChange={(e) => set('location', e.target.value)} placeholder="City, State" />
