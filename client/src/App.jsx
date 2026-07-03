@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { Layout } from './components/Layout.jsx';
 import { Login } from './pages/Login.jsx';
@@ -27,12 +27,17 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      {/* Public shareable links — no login required */}
+      {/*
+        Public, no login required. "/" is the main link to hand out — it's
+        the open-roles board, with a hamburger menu (see PublicShell) to
+        reach /apply, /post-opportunity, or staff login. "/jobs" is kept as
+        an alias pointing at the same page.
+      */}
+      <Route path="/" element={<PublicJobs />} />
+      <Route path="/jobs" element={<PublicJobs />} />
       <Route path="/apply" element={<PublicApply />} />
       <Route path="/post-opportunity" element={<PublicPostOpportunity />} />
-      <Route path="/jobs" element={<PublicJobs />} />
 
-      <Route path="/" element={<Navigate to="/job-seekers" replace />} />
       <Route path="/job-seekers" element={<Protected><JobSeekersList /></Protected>} />
       <Route path="/job-seekers/new" element={<Protected><JobSeekerForm /></Protected>} />
       <Route path="/job-seekers/:id" element={<Protected><JobSeekerDetail /></Protected>} />

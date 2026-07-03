@@ -3,7 +3,7 @@ import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
 import { getSuggestedSkills } from '../skillSuggestions.js';
-import { PublicShell } from './PublicApply.jsx';
+import { PublicShell } from '../components/PublicShell.jsx';
 
 const EMPTY = {
   title: '',

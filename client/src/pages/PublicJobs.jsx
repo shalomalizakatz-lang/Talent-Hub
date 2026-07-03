@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
-import { PublicShell } from './PublicApply.jsx';
+import { PublicShell } from '../components/PublicShell.jsx';
 
 export function PublicJobs() {
   const [jobs, setJobs] = useState(null);

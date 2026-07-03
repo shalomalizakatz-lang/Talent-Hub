@@ -1,8 +1,8 @@
 # Talent Hub
 
-A hosted, single-tenant recruiting tool with three wings — Job Seekers, Opportunities,
-and Matches — plus two public shareable links for candidates and employers to submit
-themselves without needing the shared login.
+A hosted, single-tenant recruiting tool with three internal wings — Job Seekers,
+Opportunities, and Matches — behind a shared login, plus a public-facing side for
+candidates and employers that needs no login at all.
 
 ## Stack
 
@@ -11,21 +11,24 @@ themselves without needing the shared login.
 - **Database:** PostgreSQL
 - **File storage:** S3-compatible object storage (AWS S3, Cloudflare R2, Supabase
   Storage, …) for resumes, with a local-disk fallback for local development only
-- **Auth:** Single shared password gating the whole app, session-based
+- **Auth:** Single shared password gating the internal admin tool, session-based
   (`express-session` + Postgres-backed session store)
 
 The server serves the built client as static files and exposes the API under `/api`,
 so the whole app deploys as one web service.
 
-## Public shareable links
+## One link to share: the public site
 
-Three routes are intentionally left outside the login gate:
+`https://<your-domain>/` (the bare root URL) **is** the thing to hand out — it's the
+public open-roles board, reachable by anyone with no login. A hamburger menu in the
+top corner (see `PublicShell`) links to everything else public-facing:
 
-| Link | Purpose |
-|---|---|
-| `https://<your-domain>/apply` | Job seeker self-intake — candidates fill in their own profile and upload a resume. |
-| `https://<your-domain>/post-opportunity` | Employer intake — hiring managers describe a role and what they're looking for. |
-| `https://<your-domain>/jobs` | Public "open roles" board — seekers can browse open opportunities before applying. Only role details are shown (title, skills, location, salary range) — employer contact info is never exposed here. |
+| Page | Route | Purpose |
+|---|---|---|
+| Browse Open Roles | `/` (also aliased at `/jobs`) | Lists open opportunities — title, skills, location, salary range. No employer contact info shown here. |
+| Apply as a Candidate | `/apply` | Job seeker self-intake — candidates fill in their own profile and upload a resume. |
+| Post an Opportunity | `/post-opportunity` | Employer intake — hiring managers describe a role and their contact info. |
+| Staff Login | `/login` | The one door into the internal admin tool. If already logged in, it redirects straight past the password form. |
 
 Submissions to `/apply` and `/post-opportunity` land directly in the Job Seekers /
 Opportunities lists (as `new` / `open` records) and are matched automatically like
@@ -36,6 +39,11 @@ Employers never get a browsing view of candidates — that's deliberate, since j
 seeker records hold PII (name, contact info, salary expectations). Instead,
 employers are notified by email when admin approves a strong match for their role
 (see "Approval email notifications" below).
+
+Visiting `/` never redirects into the admin tool, even if you're already logged
+in as staff — the public board is always what's at the root. Staff reach the
+internal wings only via the "Staff Login" menu item (or by going straight to
+`/login`), landing on `/job-seekers` after authenticating.
 
 ## Local development
 
