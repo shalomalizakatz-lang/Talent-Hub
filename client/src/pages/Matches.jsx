@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { ScoreRing, TierBadge, ScoreBreakdown } from '../components/ScoreRing.jsx';
+import {
+  PIPELINE_STATUS_LABELS,
+  PIPELINE_STATUS_STYLES,
+  OPPORTUNITY_STATUS_LABELS,
+  OPPORTUNITY_STATUS_STYLES,
+} from '../constants.js';
 
 export function Matches() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,11 +20,12 @@ export function Matches() {
 
   const [opportunities, setOpportunities] = useState([]);
   const [seekers, setSeekers] = useState([]);
-  const [selectedId, setSelectedId] = useState(
-    searchParams.get('opportunityId') || searchParams.get('jobSeekerId') || ''
-  );
-  const [matches, setMatches] = useState(null);
+  const [inboxMatches, setInboxMatches] = useState(null);
+  const [allMatches, setAllMatches] = useState(null); // unfiltered — used by the grouped views
   const [busyId, setBusyId] = useState(null);
+  const [expandedId, setExpandedId] = useState(
+    searchParams.get('opportunityId') || searchParams.get('jobSeekerId') || null
+  );
 
   useEffect(() => {
     api.get('/opportunities').then(setOpportunities);
@@ -27,39 +34,20 @@ export function Matches() {
 
   useEffect(() => {
     if (mode === 'inbox') {
-      setMatches(null);
-      api.get('/matches?status=suggested').then(setMatches);
-      return;
+      setInboxMatches(null);
+      api.get('/matches?status=suggested').then(setInboxMatches);
+    } else {
+      setAllMatches(null);
+      api.get('/matches').then(setAllMatches);
     }
-    if (!selectedId) {
-      setMatches(null);
-      return;
-    }
-    const key = mode === 'opportunity' ? 'opportunityId' : 'jobSeekerId';
-    setSearchParams({ [key]: selectedId });
-    api.get(`/matches?${key}=${selectedId}`).then(setMatches);
-  }, [mode, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const options = mode === 'opportunity' ? opportunities : seekers;
-
-  const grouped = useMemo(() => {
-    if (!matches) return { suggested: [], approved: [], rejected: [] };
-    return {
-      suggested: matches.filter((m) => m.status === 'suggested'),
-      approved: matches.filter((m) => m.status === 'approved'),
-      rejected: matches.filter((m) => m.status === 'rejected'),
-    };
-  }, [matches]);
+  }, [mode]);
 
   async function refresh() {
     if (mode === 'inbox') {
-      const refreshed = await api.get('/matches?status=suggested');
-      setMatches(refreshed);
-      return;
+      setInboxMatches(await api.get('/matches?status=suggested'));
+    } else {
+      setAllMatches(await api.get('/matches'));
     }
-    const key = mode === 'opportunity' ? 'opportunityId' : 'jobSeekerId';
-    const refreshed = await api.get(`/matches?${key}=${selectedId}`);
-    setMatches(refreshed);
   }
 
   async function decide(matchId, status) {
@@ -74,10 +62,33 @@ export function Matches() {
 
   function switchMode(next) {
     setMode(next);
-    setSelectedId('');
-    setMatches(null);
+    setExpandedId(null);
     setSearchParams({});
   }
+
+  function toggleExpanded(id, key) {
+    const next = expandedId === id ? null : id;
+    setExpandedId(next);
+    setSearchParams(next ? { [key]: next } : {});
+  }
+
+  const groupedByOpportunity = useMemo(() => {
+    const map = new Map();
+    for (const m of allMatches || []) {
+      if (!map.has(m.opportunity_id)) map.set(m.opportunity_id, []);
+      map.get(m.opportunity_id).push(m);
+    }
+    return map;
+  }, [allMatches]);
+
+  const groupedBySeeker = useMemo(() => {
+    const map = new Map();
+    for (const m of allMatches || []) {
+      if (!map.has(m.job_seeker_id)) map.set(m.job_seeker_id, []);
+      map.get(m.job_seeker_id).push(m);
+    }
+    return map;
+  }, [allMatches]);
 
   function suggestedActions(m) {
     return (
@@ -143,15 +154,15 @@ export function Matches() {
             Every suggested match across all candidates and roles, ranked by score — approve or reject to clear
             your queue.
           </p>
-          {matches === null ? (
+          {inboxMatches === null ? (
             <p className="text-sm text-slate-500">Loading…</p>
-          ) : matches.length === 0 ? (
+          ) : inboxMatches.length === 0 ? (
             <p className="rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
               Nothing waiting on a decision right now.
             </p>
           ) : (
             <div className="space-y-2">
-              {matches.map((m) => (
+              {inboxMatches.map((m) => (
                 <MatchRow key={m.id} match={m} renderActions={suggestedActions} />
               ))}
             </div>
@@ -159,43 +170,81 @@ export function Matches() {
         </>
       )}
 
-      {mode !== 'inbox' && (
+      {mode === 'opportunity' && (
         <>
-          <div className="mb-6">
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="block w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="">
-                {mode === 'opportunity' ? 'Select an opportunity…' : 'Select a candidate…'}
-              </option>
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {mode === 'opportunity' ? o.title : o.name}
-                </option>
+          <p className="mb-4 text-sm text-slate-500">
+            Every opportunity, with its candidate matches — tap one to expand.
+          </p>
+          {allMatches === null ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : opportunities.length === 0 ? (
+            <p className="rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No opportunities yet.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {opportunities.map((o) => (
+                <EntityAccordion
+                  key={o.id}
+                  title={o.title}
+                  subtitle={o.location}
+                  badge={
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${OPPORTUNITY_STATUS_STYLES[o.status]}`}
+                    >
+                      {OPPORTUNITY_STATUS_LABELS[o.status]}
+                    </span>
+                  }
+                  profileHref={`/opportunities/${o.id}`}
+                  matches={groupedByOpportunity.get(o.id) || []}
+                  expanded={expandedId === o.id}
+                  onToggle={() => toggleExpanded(o.id, 'opportunityId')}
+                  otherPartyLink={(m) => `/job-seekers/${m.job_seeker_id}`}
+                  otherPartyName={(m) => m.job_seeker_name}
+                  suggestedActions={suggestedActions}
+                  decidedActions={decidedActions}
+                />
               ))}
-            </select>
-          </div>
+            </div>
+          )}
+        </>
+      )}
 
-          {selectedId && matches === null && <p className="text-sm text-slate-500">Loading…</p>}
-
-          {matches && (
-            <div className="space-y-8">
-              <MatchSection title="Suggested" items={grouped.suggested} renderActions={suggestedActions} />
-              <MatchSection
-                title="Approved"
-                items={grouped.approved}
-                renderActions={decidedActions}
-                collapsedByDefault
-              />
-              <MatchSection
-                title="Rejected"
-                items={grouped.rejected}
-                renderActions={decidedActions}
-                collapsedByDefault
-                deemphasize
-              />
+      {mode === 'candidate' && (
+        <>
+          <p className="mb-4 text-sm text-slate-500">
+            Every candidate, with their opportunity matches — tap one to expand.
+          </p>
+          {allMatches === null ? (
+            <p className="text-sm text-slate-500">Loading…</p>
+          ) : seekers.length === 0 ? (
+            <p className="rounded-md border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+              No job seekers yet.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {seekers.map((s) => (
+                <EntityAccordion
+                  key={s.id}
+                  title={s.name}
+                  subtitle={s.target_role}
+                  badge={
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${PIPELINE_STATUS_STYLES[s.pipeline_status]}`}
+                    >
+                      {PIPELINE_STATUS_LABELS[s.pipeline_status]}
+                    </span>
+                  }
+                  profileHref={`/job-seekers/${s.id}`}
+                  matches={groupedBySeeker.get(s.id) || []}
+                  expanded={expandedId === s.id}
+                  onToggle={() => toggleExpanded(s.id, 'jobSeekerId')}
+                  otherPartyLink={(m) => `/opportunities/${m.opportunity_id}`}
+                  otherPartyName={(m) => m.opportunity_title}
+                  suggestedActions={suggestedActions}
+                  decidedActions={decidedActions}
+                />
+              ))}
             </div>
           )}
         </>
@@ -204,16 +253,158 @@ export function Matches() {
   );
 }
 
-// Shows both the candidate and the opportunity as separate links so either
-// profile is one tap away directly from the match card, regardless of
-// which view you're in.
-function MatchRow({ match, renderActions, dimmed }) {
+// One entity (an opportunity or a candidate) as an expandable row. Clicking
+// the row toggles expand/collapse; the title is a separate link so jumping
+// straight to the full profile doesn't fight with that toggle.
+function EntityAccordion({
+  title,
+  subtitle,
+  badge,
+  profileHref,
+  matches,
+  expanded,
+  onToggle,
+  otherPartyLink,
+  otherPartyName,
+  suggestedActions,
+  decidedActions,
+}) {
+  const suggested = matches.filter((m) => m.status === 'suggested');
+  const approved = matches.filter((m) => m.status === 'approved');
+  const rejected = matches.filter((m) => m.status === 'rejected');
+
   return (
-    <div
-      className={`flex flex-col gap-3 rounded-lg border bg-white p-3 sm:flex-row sm:items-center ${
-        dimmed ? 'border-slate-100 opacity-70' : 'border-slate-200'
-      }`}
-    >
+    <div className="rounded-lg border border-slate-200 bg-white">
+      {/*
+        A <button> can't legally contain an <a> (what <Link> renders) —
+        nesting interactive content like that makes the browser silently
+        restructure the DOM, breaking click handling in confusing ways
+        (the same class of bug hit earlier with <label>-wrapped inputs).
+        Using a div with role="button" here instead keeps the whole row
+        clickable to expand/collapse while the title stays a real,
+        independently-clickable link via stopPropagation.
+      */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left"
+      >
+        <svg
+          className={`h-3 w-3 shrink-0 text-slate-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          viewBox="0 0 24 24"
+          fill="currentColor"
+        >
+          <path d="M9 6l6 6-6 6V6z" />
+        </svg>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to={profileHref}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-slate-900 hover:underline"
+            >
+              {title}
+            </Link>
+            {badge}
+          </div>
+          {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-slate-500">
+          {suggested.length > 0 && <span className="font-medium text-indigo-600">{suggested.length} suggested</span>}
+          {approved.length > 0 && <span>{approved.length} approved</span>}
+          {matches.length === 0 && <span className="text-slate-400">No matches</span>}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="space-y-4 border-t border-slate-100 px-4 py-3">
+          <MatchGroup
+            title="Suggested"
+            items={suggested}
+            otherPartyLink={otherPartyLink}
+            otherPartyName={otherPartyName}
+            renderActions={suggestedActions}
+          />
+          <MatchGroup
+            title="Approved"
+            items={approved}
+            collapsedByDefault
+            otherPartyLink={otherPartyLink}
+            otherPartyName={otherPartyName}
+            renderActions={decidedActions}
+          />
+          <MatchGroup
+            title="Rejected"
+            items={rejected}
+            collapsedByDefault
+            deemphasize
+            otherPartyLink={otherPartyLink}
+            otherPartyName={otherPartyName}
+            renderActions={decidedActions}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MatchGroup({ title, items, otherPartyLink, otherPartyName, renderActions, collapsedByDefault, deemphasize }) {
+  return (
+    <details open={!collapsedByDefault} className="group">
+      <summary className="mb-2 cursor-pointer list-none text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span className="inline-flex items-center gap-1">
+          <svg
+            className="h-2.5 w-2.5 transition-transform group-open:rotate-90"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <path d="M9 6l6 6-6 6V6z" />
+          </svg>
+          {title} ({items.length})
+        </span>
+      </summary>
+      {items.length === 0 ? (
+        <p className="text-sm text-slate-400">None</p>
+      ) : (
+        <div className="space-y-2">
+          {items.map((m) => (
+            <div
+              key={m.id}
+              className={`flex flex-col gap-3 rounded-lg border bg-white p-3 sm:flex-row sm:items-center ${
+                deemphasize ? 'border-slate-100 opacity-70' : 'border-slate-200'
+              }`}
+            >
+              <ScoreRing score={m.score} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <Link to={otherPartyLink(m)} className="font-medium text-slate-900 hover:underline">
+                    {otherPartyName(m)}
+                  </Link>
+                  <TierBadge score={m.score} />
+                </div>
+                <ScoreBreakdown breakdown={m.score_breakdown} />
+              </div>
+              {renderActions(m)}
+            </div>
+          ))}
+        </div>
+      )}
+    </details>
+  );
+}
+
+// Flat row used by the Inbox view — neither party is "the one you're
+// already looking at", so both show as links.
+function MatchRow({ match, renderActions }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center">
       <ScoreRing score={match.score} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -233,33 +424,5 @@ function MatchRow({ match, renderActions, dimmed }) {
       </div>
       {renderActions(match)}
     </div>
-  );
-}
-
-function MatchSection({ title, items, renderActions, collapsedByDefault, deemphasize }) {
-  return (
-    <details open={!collapsedByDefault} className="group">
-      <summary className="mb-2 cursor-pointer list-none text-sm font-semibold text-slate-700">
-        <span className="inline-flex items-center gap-1">
-          <svg
-            className="h-3 w-3 transition-transform group-open:rotate-90"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path d="M9 6l6 6-6 6V6z" />
-          </svg>
-          {title} ({items.length})
-        </span>
-      </summary>
-      {items.length === 0 ? (
-        <p className="text-sm text-slate-400">None</p>
-      ) : (
-        <div className="space-y-2">
-          {items.map((m) => (
-            <MatchRow key={m.id} match={m} renderActions={renderActions} dimmed={deemphasize} />
-          ))}
-        </div>
-      )}
-    </details>
   );
 }
