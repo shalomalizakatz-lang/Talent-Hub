@@ -11,7 +11,10 @@ export function PublicShell({ title, subtitle, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
+    <div
+      className="min-h-screen bg-slate-50 px-4 pb-8"
+      style={{ paddingTop: 'max(2rem, calc(env(safe-area-inset-top) + 1rem))' }}
+    >
       <div className="mx-auto max-w-xl">
         <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="text-sm font-semibold uppercase tracking-wide text-indigo-600">

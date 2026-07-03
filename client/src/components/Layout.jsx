@@ -27,7 +27,10 @@ export function Layout({ children }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div
+          className="mx-auto flex max-w-6xl items-center justify-between px-4 pb-3"
+          style={{ paddingTop: 'max(0.75rem, calc(env(safe-area-inset-top) + 0.5rem))' }}
+        >
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-indigo-600">Talent Hub</span>
           </div>
