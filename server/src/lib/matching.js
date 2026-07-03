@@ -1,3 +1,5 @@
+import { distanceMiles } from './geocode.js';
+
 function normalizedSet(arr) {
   return new Set((arr || []).map((s) => String(s).trim().toLowerCase()).filter(Boolean));
 }
@@ -5,6 +7,12 @@ function normalizedSet(arr) {
 function round(n) {
   return Math.round(n * 100) / 100;
 }
+
+// Locations within this radius count as "the same area" — e.g. Marine Park
+// and Brooklyn are ~7 miles apart, well inside this, so a candidate in one
+// scores as local to an opportunity in the other instead of needing an
+// exact string match.
+const LOCAL_RADIUS_MILES = 20;
 
 /**
  * Scores a job seeker against an opportunity, 0-100.
@@ -35,12 +43,33 @@ export function scoreMatch(seeker, opportunity) {
   }
 
   let location = 0;
-  const seekerLoc = (seeker.location || '').trim().toLowerCase();
-  const oppLoc = (opportunity.location || '').trim().toLowerCase();
-  if (seekerLoc && oppLoc && seekerLoc === oppLoc) {
+  const seekerCoords =
+    seeker.latitude != null && seeker.longitude != null
+      ? { latitude: Number(seeker.latitude), longitude: Number(seeker.longitude) }
+      : null;
+  const oppCoords =
+    opportunity.latitude != null && opportunity.longitude != null
+      ? { latitude: Number(opportunity.latitude), longitude: Number(opportunity.longitude) }
+      : null;
+
+  let isLocal;
+  if (seekerCoords && oppCoords) {
+    isLocal = distanceMiles(seekerCoords, oppCoords) <= LOCAL_RADIUS_MILES;
+  } else {
+    // Fallback for when either location couldn't be geocoded (e.g. the
+    // geocoding service was unreachable when the record was saved).
+    const seekerLoc = (seeker.location || '').trim().toLowerCase();
+    const oppLoc = (opportunity.location || '').trim().toLowerCase();
+    isLocal = Boolean(seekerLoc && oppLoc && seekerLoc === oppLoc);
+  }
+
+  let locationBasis = 'none';
+  if (isLocal) {
     location = 15;
+    locationBasis = 'local';
   } else if (seeker.open_to_relocation) {
     location = 8;
+    locationBasis = 'relocation';
   }
 
   let salary = 15;
@@ -55,7 +84,7 @@ export function scoreMatch(seeker, opportunity) {
 
   return {
     score: total,
-    breakdown: { skills, experience, location, salary },
+    breakdown: { skills, experience, location, salary, locationBasis },
   };
 }
 

@@ -6,6 +6,7 @@ import { parseJobSeekerPayload, parseOpportunityPayload } from '../lib/payloads.
 import { recomputeMatchesForJobSeeker, recomputeMatchesForOpportunity } from '../services/matchService.js';
 import { resumeUpload, assertValidResumeContents } from '../lib/upload.js';
 import { uploadResume } from '../lib/storage.js';
+import { resolveCoordinates } from '../lib/geocode.js';
 
 export const publicRouter = Router();
 
@@ -82,6 +83,8 @@ const SEEKER_INSERT_COLUMNS = [
   'source',
   'pipeline_status',
   'notes',
+  'latitude',
+  'longitude',
 ];
 
 // Job seeker self-intake: the "apply" link.
@@ -112,6 +115,9 @@ publicRouter.post(
       },
       { allowPipelineStatus: false }
     );
+    const { latitude, longitude } = await resolveCoordinates(payload.location, null);
+    payload.latitude = latitude;
+    payload.longitude = longitude;
 
     let resumeFields = { resume_file_url: null, resume_file_name: null, resume_storage_key: null };
     if (req.file) {
@@ -146,6 +152,8 @@ const OPPORTUNITY_INSERT_COLUMNS = [
   'contact_name',
   'contact_email',
   'contact_phone',
+  'latitude',
+  'longitude',
 ];
 
 // Employer opportunity intake: the "post a role" link.
@@ -158,6 +166,9 @@ publicRouter.post(
       { ...req.body, required_skills: parseMaybeJsonArray(req.body.required_skills) },
       { allowStatus: false }
     );
+    const { latitude, longitude } = await resolveCoordinates(payload.location, null);
+    payload.latitude = latitude;
+    payload.longitude = longitude;
     const values = OPPORTUNITY_INSERT_COLUMNS.map((c) => payload[c]);
     const placeholders = OPPORTUNITY_INSERT_COLUMNS.map((_, i) => `$${i + 1}`).join(', ');
     const { rows } = await pool.query(

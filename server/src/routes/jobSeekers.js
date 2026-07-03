@@ -5,6 +5,7 @@ import { parseJobSeekerPayload, PIPELINE_STATUSES } from '../lib/payloads.js';
 import { recomputeMatchesForJobSeeker } from '../services/matchService.js';
 import { resumeUpload, assertValidResumeContents } from '../lib/upload.js';
 import { uploadResume, deleteResume } from '../lib/storage.js';
+import { resolveCoordinates } from '../lib/geocode.js';
 
 export const jobSeekersRouter = Router();
 
@@ -21,6 +22,8 @@ const INSERT_COLUMNS = [
   'source',
   'pipeline_status',
   'notes',
+  'latitude',
+  'longitude',
 ];
 
 jobSeekersRouter.get(
@@ -74,7 +77,8 @@ jobSeekersRouter.post(
   '/',
   asyncHandler(async (req, res) => {
     const payload = parseJobSeekerPayload(req.body);
-    const values = INSERT_COLUMNS.map((c) => payload[c]);
+    const { latitude, longitude } = await resolveCoordinates(payload.location, null);
+    const values = INSERT_COLUMNS.map((c) => (c === 'latitude' ? latitude : c === 'longitude' ? longitude : payload[c]));
     const placeholders = INSERT_COLUMNS.map((_, i) => `$${i + 1}`).join(', ');
     const { rows } = await pool.query(
       `INSERT INTO job_seekers (${INSERT_COLUMNS.join(', ')}) VALUES (${placeholders}) RETURNING *`,
@@ -89,14 +93,16 @@ jobSeekersRouter.post(
 jobSeekersRouter.put(
   '/:id',
   asyncHandler(async (req, res) => {
-    const existing = await pool.query('SELECT id FROM job_seekers WHERE id = $1 AND deleted_at IS NULL', [
-      req.params.id,
-    ]);
+    const existing = await pool.query(
+      'SELECT location, latitude, longitude FROM job_seekers WHERE id = $1 AND deleted_at IS NULL',
+      [req.params.id]
+    );
     if (!existing.rows[0]) throw new ApiError(404, 'Job seeker not found');
 
     const payload = parseJobSeekerPayload(req.body);
+    const { latitude, longitude } = await resolveCoordinates(payload.location, existing.rows[0]);
     const setClause = INSERT_COLUMNS.map((c, i) => `${c} = $${i + 1}`).join(', ');
-    const values = INSERT_COLUMNS.map((c) => payload[c]);
+    const values = INSERT_COLUMNS.map((c) => (c === 'latitude' ? latitude : c === 'longitude' ? longitude : payload[c]));
     const { rows } = await pool.query(
       `UPDATE job_seekers SET ${setClause}, updated_at = now() WHERE id = $${
         INSERT_COLUMNS.length + 1

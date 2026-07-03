@@ -226,8 +226,17 @@ created or updated:
   case-insensitive.
 - **Experience — 20 pts:** `min(candidate years / role minimum, 1) × 20`. Full 20
   if the role has no stated minimum.
-- **Location — 15 pts:** 15 for an exact match (case-insensitive), 8 if the
-  candidate is open to relocation, 0 otherwise.
+- **Location — 15 pts:** 15 if the candidate and role are within 20 miles of each
+  other, 8 if not but the candidate is open to relocation, 0 otherwise. Distance
+  is computed from coordinates geocoded from the free-text `location` field on
+  save (via [OpenStreetMap Nominatim](https://nominatim.openstreetmap.org/) — free,
+  no API key needed), so "Marine Park, Brooklyn" correctly scores as local to a
+  "Brooklyn, NY" opportunity even though the strings don't match. If either side
+  couldn't be geocoded (service unreachable, unrecognized location text), it falls
+  back to the original exact case-insensitive string match. Match score
+  breakdowns expose which basis applied (`locationBasis: 'local' | 'relocation' |
+  'none'`) — the UI shows "(open to relocation)" next to the location score when
+  that's why it's counted as a fit.
 - **Salary — 15 pts:** 15 if desired salary is within the role's max (or either is
   unset), otherwise `15 - (overage / 1000) × 2`, floored at 0.
 

@@ -52,16 +52,17 @@ export function TierBadge({ score }) {
 
 export function ScoreBreakdown({ breakdown }) {
   const rows = [
-    ['Skills', breakdown.skills, 50],
-    ['Experience', breakdown.experience, 20],
-    ['Location', breakdown.location, 15],
-    ['Salary', breakdown.salary, 15],
+    ['Skills', breakdown.skills, 50, null],
+    ['Experience', breakdown.experience, 20, null],
+    ['Location', breakdown.location, 15, breakdown.locationBasis],
+    ['Salary', breakdown.salary, 15, null],
   ];
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-500 sm:grid-cols-4">
-      {rows.map(([label, val, max]) => (
+      {rows.map(([label, val, max, basis]) => (
         <div key={label}>
           {label}: <span className="font-medium text-slate-700">{val}</span>/{max}
+          {basis === 'relocation' && <span className="ml-1 text-indigo-500">(open to relocation)</span>}
         </div>
       ))}
     </div>

@@ -3,6 +3,7 @@ import { pool } from '../db/pool.js';
 import { asyncHandler, ApiError } from '../middleware/errorHandler.js';
 import { parseOpportunityPayload, OPPORTUNITY_STATUSES } from '../lib/payloads.js';
 import { recomputeMatchesForOpportunity } from '../services/matchService.js';
+import { resolveCoordinates } from '../lib/geocode.js';
 
 export const opportunitiesRouter = Router();
 
@@ -19,6 +20,8 @@ const INSERT_COLUMNS = [
   'contact_name',
   'contact_email',
   'contact_phone',
+  'latitude',
+  'longitude',
 ];
 
 opportunitiesRouter.get(
@@ -64,7 +67,8 @@ opportunitiesRouter.post(
   '/',
   asyncHandler(async (req, res) => {
     const payload = parseOpportunityPayload(req.body);
-    const values = INSERT_COLUMNS.map((c) => payload[c]);
+    const { latitude, longitude } = await resolveCoordinates(payload.location, null);
+    const values = INSERT_COLUMNS.map((c) => (c === 'latitude' ? latitude : c === 'longitude' ? longitude : payload[c]));
     const placeholders = INSERT_COLUMNS.map((_, i) => `$${i + 1}`).join(', ');
     const { rows } = await pool.query(
       `INSERT INTO opportunities (${INSERT_COLUMNS.join(', ')}) VALUES (${placeholders}) RETURNING *`,
@@ -80,14 +84,15 @@ opportunitiesRouter.put(
   '/:id',
   asyncHandler(async (req, res) => {
     const existing = await pool.query(
-      'SELECT id FROM opportunities WHERE id = $1 AND deleted_at IS NULL',
+      'SELECT location, latitude, longitude FROM opportunities WHERE id = $1 AND deleted_at IS NULL',
       [req.params.id]
     );
     if (!existing.rows[0]) throw new ApiError(404, 'Opportunity not found');
 
     const payload = parseOpportunityPayload(req.body);
+    const { latitude, longitude } = await resolveCoordinates(payload.location, existing.rows[0]);
     const setClause = INSERT_COLUMNS.map((c, i) => `${c} = $${i + 1}`).join(', ');
-    const values = INSERT_COLUMNS.map((c) => payload[c]);
+    const values = INSERT_COLUMNS.map((c) => (c === 'latitude' ? latitude : c === 'longitude' ? longitude : payload[c]));
     const { rows } = await pool.query(
       `UPDATE opportunities SET ${setClause}, updated_at = now() WHERE id = $${
         INSERT_COLUMNS.length + 1
