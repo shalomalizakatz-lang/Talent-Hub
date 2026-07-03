@@ -25,9 +25,18 @@ top corner (see `PublicShell`) links to everything else public-facing:
 
 | Page | Route | Purpose |
 |---|---|---|
-| Browse Open Roles | `/` (also aliased at `/jobs`) | Lists open opportunities — title, skills, location, salary range. No employer contact info shown here. |
+| Browse Open Roles | `/` (also aliased at `/jobs`) | Lists open opportunities — title, skills, location, salary range. No employer contact info shown here. Each listing is clickable. |
 | Apply as a Candidate | `/apply` | Job seeker self-intake — candidates fill in their own profile and upload a resume. |
 | Post an Opportunity | `/post-opportunity` | Employer intake — hiring managers describe a role and their contact info. |
+
+Clicking a listing on the jobs board goes to `/apply?opportunity=<id>`, which
+pre-fills the target role and required skills from that listing and shows an
+"Applying for X" banner. The resulting candidate record gets a note ("Applied
+directly for: <title>") so admin can see it was a direct application rather
+than a generic submission — this is informational only, it doesn't skip the
+normal scoring/approval flow. A bookmarked or shared version of that same URL
+works too (`GET /api/public/jobs/:id` backs it when there's no in-app
+navigation state to read from).
 
 `/login` — the door into the internal admin tool — is deliberately **not** in
 that menu. There's no reason to advertise a staff login to candidates and

@@ -29,9 +29,15 @@ export function PublicJobs() {
       {jobs && jobs.length > 0 && (
         <div className="space-y-3">
           {jobs.map((job) => (
-            <div key={job.id} className="rounded-lg border border-slate-200 p-4">
+            <Link
+              key={job.id}
+              to={`/apply?opportunity=${job.id}`}
+              state={{ job }}
+              className="block rounded-lg border border-slate-200 p-4 hover:border-indigo-300 hover:shadow-sm"
+            >
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-semibold text-slate-900">{job.title}</h2>
+                <span className="shrink-0 text-xs font-medium text-indigo-600">Apply &rarr;</span>
               </div>
               {job.department && <p className="text-sm text-slate-500">{job.department}</p>}
               {job.location && <p className="text-sm text-slate-500">{job.location}</p>}
@@ -53,16 +59,16 @@ export function PublicJobs() {
                 </div>
               )}
               {job.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{job.notes}</p>}
-            </div>
+            </Link>
           ))}
         </div>
       )}
 
       <div className="mt-6 border-t border-slate-100 pt-4 text-center">
         <p className="text-sm text-slate-500">
-          Ready to apply?{' '}
+          Don't see the right fit?{' '}
           <Link to="/apply" className="font-medium text-indigo-600 hover:underline">
-            Submit your info
+            Submit your info anyway
           </Link>
         </p>
       </div>

@@ -50,6 +50,25 @@ publicRouter.get(
   })
 );
 
+// Single job detail — used when the "Apply" link on a specific job board
+// listing is opened directly (e.g. shared or bookmarked) rather than
+// navigated to from the board, where the client already has the data.
+publicRouter.get(
+  '/jobs/:id',
+  jobsBoardLimiter,
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT id, title, department, required_skills, min_experience_years, location,
+              salary_min, salary_max, notes, created_at
+       FROM opportunities
+       WHERE id = $1 AND status = 'open' AND deleted_at IS NULL`,
+      [req.params.id]
+    );
+    if (!rows[0]) throw new ApiError(404, 'Job not found');
+    res.json(rows[0]);
+  })
+);
+
 const SEEKER_INSERT_COLUMNS = [
   'name',
   'target_role',
@@ -72,8 +91,25 @@ publicRouter.post(
   resumeUpload.single('resume'),
   asyncHandler(async (req, res) => {
     rejectBots(req);
+
+    let notes = req.body.notes || '';
+    if (req.body.applied_opportunity_id) {
+      const { rows } = await pool.query(
+        `SELECT title FROM opportunities WHERE id = $1 AND status = 'open' AND deleted_at IS NULL`,
+        [req.body.applied_opportunity_id]
+      );
+      if (rows[0]) {
+        notes = `Applied directly for: ${rows[0].title}\n\n${notes}`.trim();
+      }
+    }
+
     const payload = parseJobSeekerPayload(
-      { ...req.body, source: req.body.source || 'self_apply', skills: parseMaybeJsonArray(req.body.skills) },
+      {
+        ...req.body,
+        notes,
+        source: req.body.source || 'self_apply',
+        skills: parseMaybeJsonArray(req.body.skills),
+      },
       { allowPipelineStatus: false }
     );
 

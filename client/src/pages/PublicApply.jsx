@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea, Checkbox } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
@@ -22,13 +23,37 @@ const EMPTY = {
 const MAX_BYTES = 10 * 1024 * 1024;
 
 export function PublicApply() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const opportunityId = searchParams.get('opportunity');
+
   const [form, setForm] = useState(EMPTY);
+  const [appliedJob, setAppliedJob] = useState(location.state?.job || null);
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeError, setResumeError] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Fallback for a direct/shared /apply?opportunity=<id> link that didn't
+  // arrive via clicking a card on the jobs board (so no router state).
+  useEffect(() => {
+    if (appliedJob || !opportunityId) return;
+    api
+      .get(`/public/jobs/${opportunityId}`)
+      .then(setAppliedJob)
+      .catch(() => {});
+  }, [opportunityId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!appliedJob) return;
+    setForm((f) => ({
+      ...f,
+      target_role: f.target_role || appliedJob.title,
+      skills: f.skills.length ? f.skills : appliedJob.required_skills || [],
+    }));
+  }, [appliedJob]);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -66,6 +91,7 @@ export function PublicApply() {
       formData.append('source', form.source);
       formData.append('notes', form.notes);
       formData.append('website', form.website || '');
+      if (appliedJob) formData.append('applied_opportunity_id', appliedJob.id);
       if (resumeFile) formData.append('resume', resumeFile);
 
       await api.post('/public/job-seekers', formData, { isForm: true });
@@ -82,7 +108,11 @@ export function PublicApply() {
       <PublicShell title="Job Seeker Application">
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6 text-center">
           <p className="text-lg font-semibold text-emerald-800">Thanks — your application was received!</p>
-          <p className="mt-1 text-sm text-emerald-700">A recruiter will follow up if there's a fit.</p>
+          <p className="mt-1 text-sm text-emerald-700">
+            {appliedJob
+              ? `A recruiter will follow up if there's a fit for ${appliedJob.title}.`
+              : "A recruiter will follow up if there's a fit."}
+          </p>
         </div>
       </PublicShell>
     );
@@ -90,6 +120,12 @@ export function PublicApply() {
 
   return (
     <PublicShell title="Job Seeker Application" subtitle="Tell us about yourself and we'll match you to open roles.">
+      {appliedJob && (
+        <div className="mb-4 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800">
+          Applying for <strong>{appliedJob.title}</strong>
+          {appliedJob.location && ` · ${appliedJob.location}`}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Full name" required>
           <TextInput value={form.name} onChange={(e) => set('name', e.target.value)} required />
