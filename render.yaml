@@ -32,6 +32,10 @@ services:
         sync: false
       - key: S3_FORCE_PATH_STYLE
         value: "false"
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
 
 databases:
   - name: talent-hub-db

@@ -16,6 +16,9 @@ const INSERT_COLUMNS = [
   'salary_max',
   'status',
   'notes',
+  'contact_name',
+  'contact_email',
+  'contact_phone',
 ];
 
 opportunitiesRouter.get(

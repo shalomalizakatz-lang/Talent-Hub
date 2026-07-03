@@ -71,6 +71,21 @@ export function OpportunityDetail() {
         />
       </div>
 
+      {(opportunity.contact_name || opportunity.contact_email || opportunity.contact_phone) && (
+        <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <h3 className="mb-1 text-sm font-medium text-slate-700">Employer contact</h3>
+          <div className="grid grid-cols-1 gap-1 text-sm text-slate-600 sm:grid-cols-3">
+            {opportunity.contact_name && <span>{opportunity.contact_name}</span>}
+            {opportunity.contact_email && (
+              <a href={`mailto:${opportunity.contact_email}`} className="text-indigo-600 hover:underline">
+                {opportunity.contact_email}
+              </a>
+            )}
+            {opportunity.contact_phone && <span>{opportunity.contact_phone}</span>}
+          </div>
+        </div>
+      )}
+
       {opportunity.required_skills?.length > 0 && (
         <div className="mt-4">
           <h3 className="mb-1 text-sm font-medium text-slate-700">Required skills</h3>

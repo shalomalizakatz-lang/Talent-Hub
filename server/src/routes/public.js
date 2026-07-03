@@ -26,6 +26,30 @@ function rejectBots(req) {
   }
 }
 
+const jobsBoardLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Public "browse open roles" board — deliberately only returns fields
+// that describe the role itself, never the employer's contact info.
+publicRouter.get(
+  '/jobs',
+  jobsBoardLimiter,
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      `SELECT id, title, department, required_skills, min_experience_years, location,
+              salary_min, salary_max, notes, created_at
+       FROM opportunities
+       WHERE status = 'open' AND deleted_at IS NULL
+       ORDER BY created_at DESC`
+    );
+    res.json(rows);
+  })
+);
+
 const SEEKER_INSERT_COLUMNS = [
   'name',
   'target_role',
@@ -83,6 +107,9 @@ const OPPORTUNITY_INSERT_COLUMNS = [
   'salary_max',
   'status',
   'notes',
+  'contact_name',
+  'contact_email',
+  'contact_phone',
 ];
 
 // Employer opportunity intake: the "post a role" link.

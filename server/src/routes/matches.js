@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { pool } from '../db/pool.js';
 import { asyncHandler, ApiError } from '../middleware/errorHandler.js';
 import { recomputeMatchesForJobSeeker } from '../services/matchService.js';
+import { sendMatchApprovedEmail } from '../lib/email.js';
 
 export const matchesRouter = Router();
 
@@ -50,15 +51,57 @@ matchesRouter.patch(
     if (!['approved', 'rejected', 'suggested'].includes(status)) {
       throw new ApiError(400, 'status must be one of: approved, rejected, suggested');
     }
+
+    const { rows: beforeRows } = await pool.query('SELECT status FROM matches WHERE id = $1', [req.params.id]);
+    if (!beforeRows[0]) throw new ApiError(404, 'Match not found');
+    const wasApproved = beforeRows[0].status === 'approved';
+
     const decidedAt = status === 'suggested' ? null : new Date();
     const { rows } = await pool.query(
       `UPDATE matches SET status = $1, decided_at = $2 WHERE id = $3 RETURNING *`,
       [status, decidedAt, req.params.id]
     );
-    if (!rows[0]) throw new ApiError(404, 'Match not found');
-    res.json(rows[0]);
+    const match = rows[0];
+    res.json(match);
+
+    // Fire the employer notification after responding — a slow/failed email
+    // provider shouldn't hold up or fail the approve action itself.
+    if (status === 'approved' && !wasApproved) {
+      notifyEmployerOfApprovedMatch(match).catch((err) => {
+        console.error('[matches] failed to send approval notification', err);
+      });
+    }
   })
 );
+
+async function notifyEmployerOfApprovedMatch(match) {
+  const { rows } = await pool.query(
+    `SELECT
+       o.title AS opportunity_title, o.contact_email, o.contact_name,
+       js.name AS seeker_name, js.target_role AS seeker_target_role,
+       js.skills AS seeker_skills, js.experience_years AS seeker_experience_years,
+       js.resume_file_url
+     FROM matches m
+     JOIN opportunities o ON o.id = m.opportunity_id
+     JOIN job_seekers js ON js.id = m.job_seeker_id
+     WHERE m.id = $1`,
+    [match.id]
+  );
+  const info = rows[0];
+  if (!info || !info.contact_email) return;
+
+  await sendMatchApprovedEmail({
+    to: info.contact_email,
+    contactName: info.contact_name,
+    opportunityTitle: info.opportunity_title,
+    seekerName: info.seeker_name,
+    seekerTargetRole: info.seeker_target_role,
+    seekerSkills: info.seeker_skills,
+    seekerExperienceYears: info.seeker_experience_years,
+    score: match.score,
+    resumeUrl: info.resume_file_url,
+  });
+}
 
 // Manual full recompute — the app also recomputes automatically on every
 // job seeker / opportunity create or update, so this is mainly a safety net.

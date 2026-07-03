@@ -56,7 +56,13 @@ export function parseOpportunityPayload(body, { allowStatus = true } = {}) {
     salary_min: optionalNonNegativeNumber(body.salary_min, 'Minimum salary'),
     salary_max: optionalNonNegativeNumber(body.salary_max, 'Maximum salary'),
     notes: optionalString(body.notes, 'Notes', { maxLength: 10000 }),
+    contact_name: optionalString(body.contact_name, 'Contact name', { maxLength: 200 }),
+    contact_email: requireString(body.contact_email, 'Contact email', { maxLength: 320 }),
+    contact_phone: optionalString(body.contact_phone, 'Contact phone', { maxLength: 50 }),
   };
+  if (!EMAIL_RE.test(payload.contact_email)) {
+    throw new ApiError(400, 'Contact email must be a valid email address');
+  }
   if (
     payload.salary_min != null &&
     payload.salary_max != null &&

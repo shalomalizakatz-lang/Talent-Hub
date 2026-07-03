@@ -16,6 +16,9 @@ const EMPTY = {
   salary_max: '',
   status: 'open',
   notes: '',
+  contact_name: '',
+  contact_email: '',
+  contact_phone: '',
 };
 
 export function OpportunityForm() {
@@ -119,6 +122,31 @@ export function OpportunityForm() {
             ))}
           </Select>
         </Field>
+
+        <div className="border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-medium text-slate-700">Employer contact</p>
+          <p className="mb-3 text-xs text-slate-500">
+            Used internally to reach out about candidates — never shown on the public jobs board.
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Contact name">
+              <TextInput value={form.contact_name || ''} onChange={(e) => set('contact_name', e.target.value)} />
+            </Field>
+            <Field label="Contact phone">
+              <TextInput value={form.contact_phone || ''} onChange={(e) => set('contact_phone', e.target.value)} />
+            </Field>
+          </div>
+          <div className="mt-4">
+            <Field label="Contact email" required>
+              <TextInput
+                type="email"
+                value={form.contact_email || ''}
+                onChange={(e) => set('contact_email', e.target.value)}
+                required
+              />
+            </Field>
+          </div>
+        </div>
 
         <Field label="Notes">
           <TextArea value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} />

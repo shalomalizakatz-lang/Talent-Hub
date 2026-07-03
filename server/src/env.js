@@ -27,6 +27,11 @@ export const env = {
 
   MAX_UPLOAD_BYTES: Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024),
   CLIENT_DIST_DIR: process.env.CLIENT_DIST_DIR || '',
+
+  // Email (Resend). If unset, approval notifications are skipped (logged,
+  // not thrown) so the app runs fine before an email provider is wired up.
+  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || '',
 };
 
 export const isObjectStorageConfigured = Boolean(

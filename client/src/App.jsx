@@ -11,6 +11,7 @@ import { OpportunityDetail } from './pages/OpportunityDetail.jsx';
 import { Matches } from './pages/Matches.jsx';
 import { PublicApply } from './pages/PublicApply.jsx';
 import { PublicPostOpportunity } from './pages/PublicPostOpportunity.jsx';
+import { PublicJobs } from './pages/PublicJobs.jsx';
 import { NotFound } from './pages/NotFound.jsx';
 
 function Protected({ children }) {
@@ -29,6 +30,7 @@ export default function App() {
       {/* Public shareable links — no login required */}
       <Route path="/apply" element={<PublicApply />} />
       <Route path="/post-opportunity" element={<PublicPostOpportunity />} />
+      <Route path="/jobs" element={<PublicJobs />} />
 
       <Route path="/" element={<Navigate to="/job-seekers" replace />} />
       <Route path="/job-seekers" element={<Protected><JobSeekersList /></Protected>} />

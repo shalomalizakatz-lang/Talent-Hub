@@ -14,6 +14,9 @@ const EMPTY = {
   salary_min: '',
   salary_max: '',
   notes: '',
+  contact_name: '',
+  contact_email: '',
+  contact_phone: '',
 };
 
 export function PublicPostOpportunity() {
@@ -107,6 +110,31 @@ export function PublicPostOpportunity() {
         <Field label="Tell us more about the role">
           <TextArea value={form.notes} onChange={(e) => set('notes', e.target.value)} />
         </Field>
+
+        <div className="border-t border-slate-100 pt-4">
+          <p className="mb-3 text-sm font-medium text-slate-700">Your contact info</p>
+          <p className="mb-3 text-xs text-slate-500">
+            So we can reach out when we find a strong candidate. Never shown publicly.
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Your name">
+              <TextInput value={form.contact_name} onChange={(e) => set('contact_name', e.target.value)} />
+            </Field>
+            <Field label="Phone">
+              <TextInput value={form.contact_phone} onChange={(e) => set('contact_phone', e.target.value)} />
+            </Field>
+          </div>
+          <div className="mt-4">
+            <Field label="Email" required>
+              <TextInput
+                type="email"
+                value={form.contact_email}
+                onChange={(e) => set('contact_email', e.target.value)}
+                required
+              />
+            </Field>
+          </div>
+        </div>
 
         {/* Honeypot — hidden from real users, catches simple bots */}
         <input

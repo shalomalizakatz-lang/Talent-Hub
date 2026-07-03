@@ -19,17 +19,23 @@ so the whole app deploys as one web service.
 
 ## Public shareable links
 
-Two routes are intentionally left outside the login gate so they can be shared with
-people who don't have the shared password:
+Three routes are intentionally left outside the login gate:
 
 | Link | Purpose |
 |---|---|
 | `https://<your-domain>/apply` | Job seeker self-intake — candidates fill in their own profile and upload a resume. |
 | `https://<your-domain>/post-opportunity` | Employer intake — hiring managers describe a role and what they're looking for. |
+| `https://<your-domain>/jobs` | Public "open roles" board — seekers can browse open opportunities before applying. Only role details are shown (title, skills, location, salary range) — employer contact info is never exposed here. |
 
-Submissions land directly in the Job Seekers / Opportunities lists (as `new` /
-`open` records) and are matched automatically like anything entered by hand. Both
-forms have a honeypot field and rate limiting against basic bot abuse.
+Submissions to `/apply` and `/post-opportunity` land directly in the Job Seekers /
+Opportunities lists (as `new` / `open` records) and are matched automatically like
+anything entered by hand. Both forms have a honeypot field and rate limiting
+against basic bot abuse.
+
+Employers never get a browsing view of candidates — that's deliberate, since job
+seeker records hold PII (name, contact info, salary expectations). Instead,
+employers are notified by email when admin approves a strong match for their role
+(see "Approval email notifications" below).
 
 ## Local development
 
@@ -103,6 +109,21 @@ work as drop-in S3-compatible endpoints; plain AWS S3 works too. Set:
 If these are left unset in production, the app falls back to local disk, which
 will **lose all resumes on every redeploy** — do not run production this way.
 
+### Approval email notifications (optional)
+
+When admin approves a match, the app emails the opportunity's contact with a
+summary of the candidate (name, target role, experience, skills, resume link) and
+the fit score. This uses [Resend](https://resend.com):
+
+1. Create a free Resend account and verify a sending domain (or use their test
+   domain for a quick trial).
+2. Create an API key.
+3. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` (an address on the verified
+   domain, e.g. `notifications@yourdomain.com`).
+
+Leave both blank to skip this feature entirely — the app logs and continues
+instead of failing when they're unset.
+
 ### Render (recommended, one-click blueprint)
 
 This repo includes a `render.yaml` blueprint that provisions:
@@ -158,6 +179,8 @@ Railway's Nixpacks builder doesn't have to guess at the monorepo layout.
    - `S3_PUBLIC_BASE_URL` = the URL from step 1.4
    - `S3_FORCE_PATH_STYLE` = `true`
    - `NODE_ENV` = `production`
+   - `RESEND_API_KEY` / `RESEND_FROM_EMAIL` — optional, see "Approval email
+     notifications" above; leave unset to skip that feature
 4. Railway auto-assigns `PORT` — no action needed, the app already reads it.
 5. Deploy. Railway builds with `npm install && npm run build` and starts with
    `npm start` per `railway.json`. Migrations run automatically on boot.
@@ -199,6 +222,10 @@ already made never silently re-ranks itself.
   history stays intact after a record is removed from the active lists.
 - `job_seekers.source` and `pipeline_status` are populated now specifically so a
   future pipeline/CRM view doesn't require a schema migration (see spec §7).
+- `opportunities.contact_email` is required on every new opportunity (internal
+  form and public `/post-opportunity` submission alike) — it's what approval
+  notification emails are sent to. `contact_name` and `contact_phone` are
+  optional. None of the three are ever exposed on the public `/jobs` board.
 
 ## Project layout
 

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea, Checkbox } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
@@ -220,6 +221,15 @@ export function PublicApply() {
           {submitting ? 'Submitting…' : 'Submit application'}
         </button>
       </form>
+
+      <div className="mt-6 border-t border-slate-100 pt-4 text-center">
+        <p className="text-sm text-slate-500">
+          Want to see what's currently open first?{' '}
+          <Link to="/jobs" className="font-medium text-indigo-600 hover:underline">
+            Browse open roles
+          </Link>
+        </p>
+      </div>
     </PublicShell>
   );
 }
