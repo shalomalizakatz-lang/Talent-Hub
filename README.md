@@ -118,14 +118,60 @@ Migrations run automatically on boot (`server/src/index.js` calls
 `runMigrations()` before starting the server), so no separate release step is
 needed.
 
-### Railway / Fly.io
+### Railway (with Supabase Storage for resumes)
 
-Both work the same way: one Node service running `npm install && npm run build`
-then `npm start`, plus a managed Postgres add-on. Set the same environment
-variables described above (see `server/.env.example`). Both platforms offer
-automated Postgres backups on their standard managed database offerings — make
-sure backups are enabled, since this database holds candidate PII (names, contact
-info, salary expectations).
+This repo includes a `railway.json` with explicit build/start commands so
+Railway's Nixpacks builder doesn't have to guess at the monorepo layout.
+
+**1. Set up Supabase Storage**
+
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In the dashboard: **Storage → Buckets → New bucket**. Name it `resumes` and
+   mark it **Public**. (Public here means anyone with the exact file URL can view
+   it — URLs are random UUIDs, not listable or guessable, but not
+   access-controlled. If you later want private, signed-URL-only access instead,
+   that requires a small code change — ask and I'll add it.)
+3. Go to **Storage → S3 Access Keys** (Project Settings → Storage in older UI) and
+   create a new S3-compatible access key. Note the **Access Key ID**, **Secret
+   Access Key**, and the **S3 endpoint URL** it gives you (looks like
+   `https://<project-ref>.supabase.co/storage/v1/s3`).
+4. Your public base URL for objects will be
+   `https://<project-ref>.supabase.co/storage/v1/object/public/resumes`.
+
+**2. Deploy on Railway**
+
+1. [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**
+   → select this repo.
+2. In the same project: **+ New → Database → Add PostgreSQL**. Railway wires
+   `DATABASE_URL` into your web service automatically if you reference
+   `${{Postgres.DATABASE_URL}}` in the web service's variables (Railway's UI
+   offers this as a suggestion/autocomplete when you start typing).
+3. On the web service, go to **Variables** and add:
+   - `SESSION_SECRET` — any long random string (e.g. generate with
+     `openssl rand -hex 32`)
+   - `SHARED_PASSWORD` — the password you'll use to log into the app
+   - `S3_BUCKET` = `resumes`
+   - `S3_REGION` = `us-east-1` (Supabase ignores the value but the S3 SDK
+     requires one)
+   - `S3_ENDPOINT` = the endpoint URL from step 1.3
+   - `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY` = from step 1.3
+   - `S3_PUBLIC_BASE_URL` = the URL from step 1.4
+   - `S3_FORCE_PATH_STYLE` = `true`
+   - `NODE_ENV` = `production`
+4. Railway auto-assigns `PORT` — no action needed, the app already reads it.
+5. Deploy. Railway builds with `npm install && npm run build` and starts with
+   `npm start` per `railway.json`. Migrations run automatically on boot.
+6. Under **Settings → Networking**, generate a public domain if one wasn't
+   created automatically. That domain is your app's URL.
+7. Enable backups on the Postgres service (**Postgres → Settings → Backups**) —
+   this database holds candidate PII (names, contact info, salary expectations).
+
+### Fly.io
+
+Works the same way conceptually: one Node service (`flyctl launch`, using the
+`npm install && npm run build` / `npm start` commands), a `fly postgres create`
+database attached via `fly postgres attach`, and the same environment variables
+set with `fly secrets set`.
 
 ## Matching algorithm
 
