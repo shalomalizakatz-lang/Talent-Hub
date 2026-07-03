@@ -79,6 +79,39 @@ export function Matches() {
     setSearchParams({});
   }
 
+  function suggestedActions(m) {
+    return (
+      <div className="flex gap-2">
+        <button
+          disabled={busyId === m.id}
+          onClick={() => decide(m.id, 'approved')}
+          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          Approve
+        </button>
+        <button
+          disabled={busyId === m.id}
+          onClick={() => decide(m.id, 'rejected')}
+          className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+        >
+          Reject
+        </button>
+      </div>
+    );
+  }
+
+  function decidedActions(m) {
+    return (
+      <button
+        disabled={busyId === m.id}
+        onClick={() => decide(m.id, 'suggested')}
+        className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+      >
+        Move back to suggested
+      </button>
+    );
+  }
+
   return (
     <div>
       <h1 className="mb-4 text-xl font-bold text-slate-900">Matches</h1>
@@ -119,44 +152,7 @@ export function Matches() {
           ) : (
             <div className="space-y-2">
               {matches.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center"
-                >
-                  <ScoreRing score={m.score} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link to={`/job-seekers/${m.job_seeker_id}`} className="font-medium text-slate-900 hover:underline">
-                        {m.job_seeker_name}
-                      </Link>
-                      <span className="text-slate-400">&rarr;</span>
-                      <Link
-                        to={`/opportunities/${m.opportunity_id}`}
-                        className="font-medium text-slate-900 hover:underline"
-                      >
-                        {m.opportunity_title}
-                      </Link>
-                      <TierBadge score={m.score} />
-                    </div>
-                    <ScoreBreakdown breakdown={m.score_breakdown} />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      disabled={busyId === m.id}
-                      onClick={() => decide(m.id, 'approved')}
-                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      disabled={busyId === m.id}
-                      onClick={() => decide(m.id, 'rejected')}
-                      className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
+                <MatchRow key={m.id} match={m} renderActions={suggestedActions} />
               ))}
             </div>
           )}
@@ -186,64 +182,19 @@ export function Matches() {
 
           {matches && (
             <div className="space-y-8">
-              <MatchSection
-                title="Suggested"
-                items={grouped.suggested}
-                mode={mode}
-                busyId={busyId}
-                renderActions={(m) => (
-                  <div className="flex gap-2">
-                    <button
-                      disabled={busyId === m.id}
-                      onClick={() => decide(m.id, 'approved')}
-                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      disabled={busyId === m.id}
-                      onClick={() => decide(m.id, 'rejected')}
-                      className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
-              />
-
+              <MatchSection title="Suggested" items={grouped.suggested} renderActions={suggestedActions} />
               <MatchSection
                 title="Approved"
                 items={grouped.approved}
-                mode={mode}
-                busyId={busyId}
+                renderActions={decidedActions}
                 collapsedByDefault
-                renderActions={(m) => (
-                  <button
-                    disabled={busyId === m.id}
-                    onClick={() => decide(m.id, 'suggested')}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Move back to suggested
-                  </button>
-                )}
               />
-
               <MatchSection
                 title="Rejected"
                 items={grouped.rejected}
-                mode={mode}
-                busyId={busyId}
+                renderActions={decidedActions}
                 collapsedByDefault
                 deemphasize
-                renderActions={(m) => (
-                  <button
-                    disabled={busyId === m.id}
-                    onClick={() => decide(m.id, 'suggested')}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-                  >
-                    Move back to suggested
-                  </button>
-                )}
               />
             </div>
           )}
@@ -253,7 +204,39 @@ export function Matches() {
   );
 }
 
-function MatchSection({ title, items, mode, renderActions, collapsedByDefault, deemphasize }) {
+// Shows both the candidate and the opportunity as separate links so either
+// profile is one tap away directly from the match card, regardless of
+// which view you're in.
+function MatchRow({ match, renderActions, dimmed }) {
+  return (
+    <div
+      className={`flex flex-col gap-3 rounded-lg border bg-white p-3 sm:flex-row sm:items-center ${
+        dimmed ? 'border-slate-100 opacity-70' : 'border-slate-200'
+      }`}
+    >
+      <ScoreRing score={match.score} />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to={`/job-seekers/${match.job_seeker_id}`} className="font-medium text-slate-900 hover:underline">
+            {match.job_seeker_name}
+          </Link>
+          <span className="text-slate-400">&rarr;</span>
+          <Link
+            to={`/opportunities/${match.opportunity_id}`}
+            className="font-medium text-slate-900 hover:underline"
+          >
+            {match.opportunity_title}
+          </Link>
+          <TierBadge score={match.score} />
+        </div>
+        <ScoreBreakdown breakdown={match.score_breakdown} />
+      </div>
+      {renderActions(match)}
+    </div>
+  );
+}
+
+function MatchSection({ title, items, renderActions, collapsedByDefault, deemphasize }) {
   return (
     <details open={!collapsedByDefault} className="group">
       <summary className="mb-2 cursor-pointer list-none text-sm font-semibold text-slate-700">
@@ -273,30 +256,7 @@ function MatchSection({ title, items, mode, renderActions, collapsedByDefault, d
       ) : (
         <div className="space-y-2">
           {items.map((m) => (
-            <div
-              key={m.id}
-              className={`flex flex-col gap-3 rounded-lg border bg-white p-3 sm:flex-row sm:items-center ${
-                deemphasize ? 'border-slate-100 opacity-70' : 'border-slate-200'
-              }`}
-            >
-              <ScoreRing score={m.score} />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  {mode === 'opportunity' ? (
-                    <Link to={`/job-seekers/${m.job_seeker_id}`} className="font-medium text-slate-900 hover:underline">
-                      {m.job_seeker_name}
-                    </Link>
-                  ) : (
-                    <Link to={`/opportunities/${m.opportunity_id}`} className="font-medium text-slate-900 hover:underline">
-                      {m.opportunity_title}
-                    </Link>
-                  )}
-                  <TierBadge score={m.score} />
-                </div>
-                <ScoreBreakdown breakdown={m.score_breakdown} />
-              </div>
-              {renderActions(m)}
-            </div>
+            <MatchRow key={m.id} match={m} renderActions={renderActions} dimmed={deemphasize} />
           ))}
         </div>
       )}
