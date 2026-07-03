@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import helmet from 'helmet';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { env } from './env.js';
@@ -14,6 +15,7 @@ import { opportunitiesRouter } from './routes/opportunities.js';
 import { matchesRouter } from './routes/matches.js';
 import { publicRouter } from './routes/public.js';
 import { LOCAL_UPLOAD_DIR } from './lib/storage.js';
+import { renderLoginHtml } from './lib/renderHtml.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PgSession = connectPgSimple(session);
@@ -64,7 +66,22 @@ export function createApp() {
   app.use(express.static(clientDist));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(clientDist, 'index.html'), (err) => {
+
+    const indexPath = path.join(clientDist, 'index.html');
+
+    // /login gets its own title/icon/OG tags baked into the raw HTML so
+    // link previews (which never run client JS) show the right thing —
+    // see renderHtml.js for why this can't be done client-side alone.
+    if (req.path === '/login') {
+      fs.readFile(indexPath, 'utf8', (err, html) => {
+        if (err) return next(err);
+        res.set('Content-Type', 'text/html');
+        res.send(renderLoginHtml(html));
+      });
+      return;
+    }
+
+    res.sendFile(indexPath, (err) => {
       if (err) next(err);
     });
   });

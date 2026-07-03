@@ -3,18 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Talent Hub</title>
+    <title id="page-title">Talent Hub — Open Roles</title>
 
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link id="icon-32" rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link id="icon-16" rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link id="apple-icon" rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link id="manifest-link" rel="manifest" href="/manifest.webmanifest" />
 
     <meta name="theme-color" content="#4338ca" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Talent Hub" />
+    <meta id="apple-title" name="apple-mobile-web-app-title" content="Talent Hub" />
+
+    <!--
+      Route-specific title/icon/OG tags below are rewritten server-side for
+      GET /login (see server/src/app.js) — link previews (iMessage, etc.)
+      fetch raw HTML and never run client JS, so the client-side icon swap
+      in DynamicHeadIcons.jsx only covers "Add to Home Screen", not sharing.
+    -->
+    <meta id="og-title" property="og:title" content="Talent Hub — Open Roles" />
+    <meta id="og-description" property="og:description" content="Browse open roles and apply, or post a role to hire." />
+    <meta id="og-image" property="og:image" content="/icon-512.png" />
+    <meta property="og:type" content="website" />
+    <meta id="twitter-card" name="twitter:card" content="summary" />
+    <meta id="twitter-title" name="twitter:title" content="Talent Hub — Open Roles" />
+    <meta id="twitter-description" name="twitter:description" content="Browse open roles and apply, or post a role to hire." />
+    <meta id="twitter-image" name="twitter:image" content="/icon-512.png" />
   </head>
   <body>
     <div id="root"></div>

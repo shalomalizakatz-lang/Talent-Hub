@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const DEFAULT_ICONS = {
+  title: 'Talent Hub — Open Roles',
   favicon32: '/favicon-32.png',
   favicon16: '/favicon-16.png',
   appleTouchIcon: '/apple-touch-icon.png',
@@ -10,8 +11,13 @@ const DEFAULT_ICONS = {
 
 // Lock-badged variant of the same icon, swapped in specifically for /login
 // so a home-screen shortcut to the staff login is visually distinct from
-// the public site's shortcut.
+// the public site's shortcut. Note: this only takes effect for in-app
+// client-side navigation — the initial HTML for a fresh GET /login is
+// already rewritten server-side (see server/src/lib/renderHtml.js), which
+// is what actually matters for link previews/sharing since those never
+// run this JS.
 const LOGIN_ICONS = {
+  title: 'Talent Hub — Staff Login',
   favicon32: '/favicon-login-32.png',
   favicon16: '/favicon-login-32.png',
   appleTouchIcon: '/apple-touch-icon-login.png',
@@ -32,6 +38,7 @@ export function DynamicHeadIcons() {
 
   useEffect(() => {
     const icons = location.pathname === '/login' ? LOGIN_ICONS : DEFAULT_ICONS;
+    document.title = icons.title;
     setLinkHref('icon', '32x32', icons.favicon32);
     setLinkHref('icon', '16x16', icons.favicon16);
     setLinkHref('apple-touch-icon', null, icons.appleTouchIcon);
