@@ -65,7 +65,11 @@ export function OpportunitiesList() {
                   {OPPORTUNITY_STATUS_LABELS[o.status]}
                 </span>
               </div>
-              {o.department && <p className="text-sm text-slate-500">{o.department}</p>}
+              {(o.company || o.position_type) && (
+                <p className="text-sm text-slate-500">
+                  {[o.company, o.position_type].filter(Boolean).join(' — ')}
+                </p>
+              )}
               {o.location && <p className="text-sm text-slate-500">{o.location}</p>}
               {o.required_skills?.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">

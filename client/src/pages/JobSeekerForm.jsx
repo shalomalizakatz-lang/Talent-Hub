@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { Field, TextInput, NumberInput, TextArea, Select, Checkbox } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
+import { ResumeUpload } from '../components/ResumeUpload.jsx';
 import { getSuggestedSkills } from '../skillSuggestions.js';
 import { PIPELINE_STATUSES, PIPELINE_STATUS_LABELS } from '../constants.js';
 
@@ -21,6 +22,8 @@ const EMPTY = {
   notes: '',
 };
 
+const MAX_RESUME_BYTES = 10 * 1024 * 1024;
+
 export function JobSeekerForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
@@ -29,6 +32,15 @@ export function JobSeekerForm() {
   const [loading, setLoading] = useState(isEdit);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Create mode only: a resume picked before the record exists yet, staged
+  // locally and uploaded right after the create call succeeds. Edit mode
+  // instead uses <ResumeUpload>, which uploads immediately against the
+  // already-existing record — same as the detail page.
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeError, setResumeError] = useState('');
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -47,6 +59,37 @@ export function JobSeekerForm() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function handlePickResume(file) {
+    setResumeError('');
+    if (!file) return;
+    if (!/\.(pdf|doc|docx)$/i.test(file.name)) {
+      setResumeError('File must be a PDF, DOC, or DOCX');
+      return;
+    }
+    if (file.size > MAX_RESUME_BYTES) {
+      setResumeError('File must be 10MB or smaller');
+      return;
+    }
+    setResumeFile(file);
+  }
+
+  async function handleUploadExisting(file) {
+    setResumeUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+      const updated = await api.post(`/job-seekers/${id}/resume`, formData, { isForm: true });
+      setForm((f) => ({ ...f, ...updated }));
+    } finally {
+      setResumeUploading(false);
+    }
+  }
+
+  async function handleRemoveExisting() {
+    const updated = await api.del(`/job-seekers/${id}/resume`);
+    setForm((f) => ({ ...f, ...updated }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
@@ -58,6 +101,13 @@ export function JobSeekerForm() {
         desired_salary: form.desired_salary === '' ? null : Number(form.desired_salary),
       };
       const saved = isEdit ? await api.put(`/job-seekers/${id}`, payload) : await api.post('/job-seekers', payload);
+
+      if (!isEdit && resumeFile) {
+        const formData = new FormData();
+        formData.append('resume', resumeFile);
+        await api.post(`/job-seekers/${saved.id}/resume`, formData, { isForm: true });
+      }
+
       navigate(`/job-seekers/${saved.id}`);
     } catch (err) {
       setError(err.message || 'Failed to save');
@@ -150,6 +200,80 @@ export function JobSeekerForm() {
         <Field label="Notes">
           <TextArea value={form.notes || ''} onChange={(e) => set('notes', e.target.value)} />
         </Field>
+
+        {isEdit ? (
+          <div>
+            <span className="mb-1 block text-sm font-medium text-slate-700">Resume</span>
+            <ResumeUpload
+              currentFileName={form.resume_file_name}
+              currentFileUrl={form.resume_file_url}
+              uploading={resumeUploading}
+              onUpload={handleUploadExisting}
+              onRemove={handleRemoveExisting}
+            />
+          </div>
+        ) : (
+          /*
+            Deliberately not using <Field>, which renders a <label>: a
+            <label> wrapping a file input makes the browser natively try to
+            open the picker on any click inside it, competing with our own
+            onClick handler below. On mobile Safari that race silently
+            drops the file selection instead of erroring, which is exactly
+            the bug this avoids (same fix as the public apply form).
+          */
+          <div className="block">
+            <span className="mb-1 block text-sm font-medium text-slate-700">Resume</span>
+            {resumeFile ? (
+              <div className="flex items-center justify-between rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2">
+                <span className="flex min-w-0 items-center gap-2 text-sm text-emerald-800">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="shrink-0"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span className="truncate">{resumeFile.name}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResumeFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  className="shrink-0 text-xs font-medium text-slate-500 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handlePickResume(e.dataTransfer.files?.[0]);
+                }}
+                className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500 hover:border-indigo-300"
+              >
+                Drag & drop a resume here, or click to choose a file
+                <span className="mt-1 text-xs text-slate-400">PDF, DOC, or DOCX — up to 10MB</span>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={(e) => handlePickResume(e.target.files?.[0])}
+            />
+            {resumeError && <p className="mt-1 text-xs text-rose-600">{resumeError}</p>}
+          </div>
+        )}
 
         {error && <p className="text-sm text-rose-600">{error}</p>}
 

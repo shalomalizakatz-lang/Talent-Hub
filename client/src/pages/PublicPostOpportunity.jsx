@@ -7,7 +7,8 @@ import { PublicShell } from '../components/PublicShell.jsx';
 
 const EMPTY = {
   title: '',
-  department: '',
+  company: '',
+  position_type: '',
   required_skills: [],
   min_experience_years: '',
   location: '',
@@ -75,16 +76,28 @@ export function PublicPostOpportunity() {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Department">
-            <TextInput value={form.department} onChange={(e) => set('department', e.target.value)} />
+          <Field label="Company">
+            <TextInput
+              value={form.company}
+              onChange={(e) => set('company', e.target.value)}
+              placeholder="e.g. Healthcare Group"
+            />
           </Field>
-          <Field label="Minimum experience (years)">
-            <NumberInput
-              value={form.min_experience_years}
-              onChange={(e) => set('min_experience_years', e.target.value)}
+          <Field label="Position type">
+            <TextInput
+              value={form.position_type}
+              onChange={(e) => set('position_type', e.target.value)}
+              placeholder="e.g. Nursing Home Administrator"
             />
           </Field>
         </div>
+
+        <Field label="Minimum experience (years)">
+          <NumberInput
+            value={form.min_experience_years}
+            onChange={(e) => set('min_experience_years', e.target.value)}
+          />
+        </Field>
 
         <TagInput
           label="Required skills"

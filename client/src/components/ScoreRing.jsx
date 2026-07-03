@@ -63,6 +63,7 @@ export function ScoreBreakdown({ breakdown }) {
         <div key={label}>
           {label}: <span className="font-medium text-slate-700">{val}</span>/{max}
           {basis === 'relocation' && <span className="ml-1 text-indigo-500">(open to relocation)</span>}
+          {basis === 'nearby' && <span className="ml-1 text-indigo-500">(nearby)</span>}
         </div>
       ))}
     </div>

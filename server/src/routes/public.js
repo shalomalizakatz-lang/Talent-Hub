@@ -41,7 +41,7 @@ publicRouter.get(
   jobsBoardLimiter,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query(
-      `SELECT id, title, department, required_skills, min_experience_years, location,
+      `SELECT id, title, company, position_type, required_skills, min_experience_years, location,
               salary_min, salary_max, notes, created_at
        FROM opportunities
        WHERE status = 'open' AND deleted_at IS NULL
@@ -59,7 +59,7 @@ publicRouter.get(
   jobsBoardLimiter,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query(
-      `SELECT id, title, department, required_skills, min_experience_years, location,
+      `SELECT id, title, company, position_type, required_skills, min_experience_years, location,
               salary_min, salary_max, notes, created_at
        FROM opportunities
        WHERE id = $1 AND status = 'open' AND deleted_at IS NULL`,
@@ -141,7 +141,8 @@ publicRouter.post(
 
 const OPPORTUNITY_INSERT_COLUMNS = [
   'title',
-  'department',
+  'company',
+  'position_type',
   'required_skills',
   'min_experience_years',
   'location',

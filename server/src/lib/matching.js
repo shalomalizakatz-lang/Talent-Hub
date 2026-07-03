@@ -8,11 +8,19 @@ function round(n) {
   return Math.round(n * 100) / 100;
 }
 
-// Locations within this radius count as "the same area" — e.g. Marine Park
-// and Brooklyn are ~7 miles apart, well inside this, so a candidate in one
-// scores as local to an opportunity in the other instead of needing an
-// exact string match.
+// Locations within this radius count as "the same immediate area" — e.g.
+// Marine Park and Brooklyn are ~7 miles apart, well inside this, so a
+// candidate in one scores as local to an opportunity in the other instead
+// of needing an exact string match.
 const LOCAL_RADIUS_MILES = 20;
+
+// Beyond LOCAL_RADIUS_MILES but within this, still the same metro area for
+// commuting purposes (e.g. Hernando, MS to Memphis, TN is ~23 miles —
+// clearly the same metro, but a hard cutoff at 20 would score that as a
+// total non-match). Credit scales down linearly from full marks at the
+// local radius to the same floor as "open to relocation" at this edge,
+// rather than falling off a cliff right at LOCAL_RADIUS_MILES.
+const NEARBY_RADIUS_MILES = 50;
 
 /**
  * Scores a job seeker against an opportunity, 0-100.
@@ -43,6 +51,7 @@ export function scoreMatch(seeker, opportunity) {
   }
 
   let location = 0;
+  let locationBasis = 'none';
   const seekerCoords =
     seeker.latitude != null && seeker.longitude != null
       ? { latitude: Number(seeker.latitude), longitude: Number(seeker.longitude) }
@@ -52,24 +61,32 @@ export function scoreMatch(seeker, opportunity) {
       ? { latitude: Number(opportunity.latitude), longitude: Number(opportunity.longitude) }
       : null;
 
-  let isLocal;
   if (seekerCoords && oppCoords) {
-    isLocal = distanceMiles(seekerCoords, oppCoords) <= LOCAL_RADIUS_MILES;
+    const distance = distanceMiles(seekerCoords, oppCoords);
+    if (distance <= LOCAL_RADIUS_MILES) {
+      location = 15;
+      locationBasis = 'local';
+    } else if (distance <= NEARBY_RADIUS_MILES) {
+      const ratio = (distance - LOCAL_RADIUS_MILES) / (NEARBY_RADIUS_MILES - LOCAL_RADIUS_MILES);
+      location = round(15 - ratio * 7); // scales from 15 down to 8 across the nearby band
+      locationBasis = 'nearby';
+    } else if (seeker.open_to_relocation) {
+      location = 8;
+      locationBasis = 'relocation';
+    }
   } else {
     // Fallback for when either location couldn't be geocoded (e.g. the
-    // geocoding service was unreachable when the record was saved).
+    // geocoding service was unreachable when the record was saved) — no
+    // distance to grade on, so it's back to an exact string match.
     const seekerLoc = (seeker.location || '').trim().toLowerCase();
     const oppLoc = (opportunity.location || '').trim().toLowerCase();
-    isLocal = Boolean(seekerLoc && oppLoc && seekerLoc === oppLoc);
-  }
-
-  let locationBasis = 'none';
-  if (isLocal) {
-    location = 15;
-    locationBasis = 'local';
-  } else if (seeker.open_to_relocation) {
-    location = 8;
-    locationBasis = 'relocation';
+    if (seekerLoc && oppLoc && seekerLoc === oppLoc) {
+      location = 15;
+      locationBasis = 'local';
+    } else if (seeker.open_to_relocation) {
+      location = 8;
+      locationBasis = 'relocation';
+    }
   }
 
   let salary = 15;

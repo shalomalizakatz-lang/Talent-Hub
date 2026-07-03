@@ -44,9 +44,21 @@ export function JobSeekerDetail() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/job-seekers" className="text-sm text-slate-500 hover:underline">
-        &larr; All job seekers
-      </Link>
+      {/*
+        navigate(-1) instead of a fixed Link to /job-seekers: this page can
+        be reached from the list, but also from a match card (Matches
+        inbox, by-opportunity, by-candidate) — a hardcoded destination
+        would always dump you back on the list even if you came from
+        Matches. Actual browser back-navigation goes wherever you
+        actually came from.
+      */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="text-sm text-slate-500 hover:underline"
+      >
+        &larr; Back
+      </button>
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

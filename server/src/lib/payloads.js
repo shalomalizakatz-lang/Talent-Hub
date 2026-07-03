@@ -46,7 +46,8 @@ export function parseJobSeekerPayload(body, { allowPipelineStatus = true } = {})
 export function parseOpportunityPayload(body, { allowStatus = true } = {}) {
   const payload = {
     title: requireString(body.title, 'Title', { maxLength: 200 }),
-    department: optionalString(body.department, 'Department', { maxLength: 200 }),
+    company: optionalString(body.company, 'Company', { maxLength: 200 }),
+    position_type: optionalString(body.position_type, 'Position type', { maxLength: 200 }),
     required_skills: stringArray(body.required_skills, 'Required skills'),
     min_experience_years: optionalNonNegativeNumber(
       body.min_experience_years,

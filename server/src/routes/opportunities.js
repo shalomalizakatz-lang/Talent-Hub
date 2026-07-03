@@ -9,7 +9,8 @@ export const opportunitiesRouter = Router();
 
 const INSERT_COLUMNS = [
   'title',
-  'department',
+  'company',
+  'position_type',
   'required_skills',
   'min_experience_years',
   'location',

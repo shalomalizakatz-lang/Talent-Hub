@@ -23,14 +23,28 @@ export function OpportunityDetail() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link to="/opportunities" className="text-sm text-slate-500 hover:underline">
-        &larr; All opportunities
-      </Link>
+      {/*
+        navigate(-1) instead of a fixed Link to /opportunities: this page
+        can be reached from the list, but also from a match card (Matches
+        inbox, by-opportunity, by-candidate) — a hardcoded destination
+        would always dump you back on the list even if you came from
+        Matches. Actual browser back-navigation goes wherever you
+        actually came from.
+      */}
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="text-sm text-slate-500 hover:underline"
+      >
+        &larr; Back
+      </button>
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{opportunity.title}</h1>
-          <p className="text-slate-500">{opportunity.department}</p>
+          <p className="text-slate-500">
+            {[opportunity.company, opportunity.position_type].filter(Boolean).join(' — ')}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <span
