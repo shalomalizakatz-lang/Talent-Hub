@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
+import { DynamicHeadIcons } from './components/DynamicHeadIcons.jsx';
 import { Layout } from './components/Layout.jsx';
 import { Login } from './pages/Login.jsx';
 import { JobSeekersList } from './pages/JobSeekersList.jsx';
@@ -24,33 +25,36 @@ function Protected({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
+    <>
+      <DynamicHeadIcons />
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-      {/*
-        Public, no login required. "/" is the main link to hand out — it's
-        the open-roles board, with a hamburger menu (see PublicShell) to
-        reach /apply, /post-opportunity, or staff login. "/jobs" is kept as
-        an alias pointing at the same page.
-      */}
-      <Route path="/" element={<PublicJobs />} />
-      <Route path="/jobs" element={<PublicJobs />} />
-      <Route path="/apply" element={<PublicApply />} />
-      <Route path="/post-opportunity" element={<PublicPostOpportunity />} />
+        {/*
+          Public, no login required. "/" is the main link to hand out —
+          it's the open-roles board, with a hamburger menu (see
+          PublicShell) to reach /apply, /post-opportunity, or staff login.
+          "/jobs" is kept as an alias pointing at the same page.
+        */}
+        <Route path="/" element={<PublicJobs />} />
+        <Route path="/jobs" element={<PublicJobs />} />
+        <Route path="/apply" element={<PublicApply />} />
+        <Route path="/post-opportunity" element={<PublicPostOpportunity />} />
 
-      <Route path="/job-seekers" element={<Protected><JobSeekersList /></Protected>} />
-      <Route path="/job-seekers/new" element={<Protected><JobSeekerForm /></Protected>} />
-      <Route path="/job-seekers/:id" element={<Protected><JobSeekerDetail /></Protected>} />
-      <Route path="/job-seekers/:id/edit" element={<Protected><JobSeekerForm /></Protected>} />
+        <Route path="/job-seekers" element={<Protected><JobSeekersList /></Protected>} />
+        <Route path="/job-seekers/new" element={<Protected><JobSeekerForm /></Protected>} />
+        <Route path="/job-seekers/:id" element={<Protected><JobSeekerDetail /></Protected>} />
+        <Route path="/job-seekers/:id/edit" element={<Protected><JobSeekerForm /></Protected>} />
 
-      <Route path="/opportunities" element={<Protected><OpportunitiesList /></Protected>} />
-      <Route path="/opportunities/new" element={<Protected><OpportunityForm /></Protected>} />
-      <Route path="/opportunities/:id" element={<Protected><OpportunityDetail /></Protected>} />
-      <Route path="/opportunities/:id/edit" element={<Protected><OpportunityForm /></Protected>} />
+        <Route path="/opportunities" element={<Protected><OpportunitiesList /></Protected>} />
+        <Route path="/opportunities/new" element={<Protected><OpportunityForm /></Protected>} />
+        <Route path="/opportunities/:id" element={<Protected><OpportunityDetail /></Protected>} />
+        <Route path="/opportunities/:id/edit" element={<Protected><OpportunityForm /></Protected>} />
 
-      <Route path="/matches" element={<Protected><Matches /></Protected>} />
+        <Route path="/matches" element={<Protected><Matches /></Protected>} />
 
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }
