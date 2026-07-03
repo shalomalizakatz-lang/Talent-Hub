@@ -48,10 +48,12 @@ export function PublicApply() {
 
   useEffect(() => {
     if (!appliedJob) return;
+    // Deliberately only pre-fills the role name, not skills — skills should
+    // reflect what the candidate actually claims to have, not be auto-copied
+    // from the listing's requirements (that would let the score be gamed).
     setForm((f) => ({
       ...f,
       target_role: f.target_role || appliedJob.title,
-      skills: f.skills.length ? f.skills : appliedJob.required_skills || [],
     }));
   }, [appliedJob]);
 
