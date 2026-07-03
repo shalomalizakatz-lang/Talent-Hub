@@ -28,7 +28,11 @@ top corner (see `PublicShell`) links to everything else public-facing:
 | Browse Open Roles | `/` (also aliased at `/jobs`) | Lists open opportunities — title, skills, location, salary range. No employer contact info shown here. |
 | Apply as a Candidate | `/apply` | Job seeker self-intake — candidates fill in their own profile and upload a resume. |
 | Post an Opportunity | `/post-opportunity` | Employer intake — hiring managers describe a role and their contact info. |
-| Staff Login | `/login` | The one door into the internal admin tool. If already logged in, it redirects straight past the password form. |
+
+`/login` — the door into the internal admin tool — is deliberately **not** in
+that menu. There's no reason to advertise a staff login to candidates and
+employers browsing the public site; staff just bookmark `/login` directly. If
+already logged in, it redirects straight past the password form.
 
 Submissions to `/apply` and `/post-opportunity` land directly in the Job Seekers /
 Opportunities lists (as `new` / `open` records) and are matched automatically like
@@ -42,8 +46,8 @@ employers are notified by email when admin approves a strong match for their rol
 
 Visiting `/` never redirects into the admin tool, even if you're already logged
 in as staff — the public board is always what's at the root. Staff reach the
-internal wings only via the "Staff Login" menu item (or by going straight to
-`/login`), landing on `/job-seekers` after authenticating.
+internal wings by going straight to `/login`, landing on `/job-seekers` after
+authenticating.
 
 ## Local development
 

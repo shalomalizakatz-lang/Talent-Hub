@@ -44,14 +44,6 @@ export function PublicShell({ title, subtitle, children }) {
                       {link.label}
                     </Link>
                   ))}
-                  <div className="my-1 border-t border-slate-100" />
-                  <Link
-                    to="/login"
-                    onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2 text-sm text-slate-500 hover:bg-slate-50"
-                  >
-                    Staff Login
-                  </Link>
                 </div>
               </>
             )}
