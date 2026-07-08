@@ -5,11 +5,13 @@ import { Field, TextInput, NumberInput, TextArea, Select } from '../components/F
 import { TagInput } from '../components/TagInput.jsx';
 import { getSuggestedSkills } from '../skillSuggestions.js';
 import { OPPORTUNITY_STATUSES, OPPORTUNITY_STATUS_LABELS } from '../constants.js';
+import { INDUSTRIES } from '../industries.js';
 
 const EMPTY = {
   title: '',
   company: '',
   position_type: '',
+  industry: '',
   required_skills: [],
   min_experience_years: '',
   location: '',
@@ -79,6 +81,17 @@ export function OpportunityForm() {
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <Field label="Title" required>
           <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
+        </Field>
+
+        <Field label="Industry">
+          <Select value={form.industry || ''} onChange={(e) => set('industry', e.target.value)}>
+            <option value="">Select an industry…</option>
+            {INDUSTRIES.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </Select>
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

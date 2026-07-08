@@ -11,6 +11,7 @@ const INSERT_COLUMNS = [
   'title',
   'company',
   'position_type',
+  'industry',
   'required_skills',
   'min_experience_years',
   'location',

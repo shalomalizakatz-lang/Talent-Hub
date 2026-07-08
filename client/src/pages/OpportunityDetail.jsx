@@ -68,6 +68,7 @@ export function OpportunityDetail() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <DetailItem label="Industry" value={opportunity.industry} />
         <DetailItem label="Location" value={opportunity.location} />
         <DetailItem
           label="Minimum experience"

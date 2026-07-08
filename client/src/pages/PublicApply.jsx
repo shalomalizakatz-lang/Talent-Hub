@@ -138,6 +138,23 @@ export function PublicApply() {
           <TextInput value={form.name} onChange={(e) => set('name', e.target.value)} required />
         </Field>
 
+        <Field label="Industry">
+          <Select value={form.industry} onChange={(e) => set('industry', e.target.value)}>
+            <option value="">Select an industry…</option>
+            {INDUSTRIES.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Checkbox
+          label="I'm not tied to this industry — open to other industries too"
+          checked={form.open_to_other_industries}
+          onChange={(e) => set('open_to_other_industries', e.target.checked)}
+        />
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Role you're looking for">
             <TextInput
@@ -172,23 +189,6 @@ export function PublicApply() {
           label="I'm open to relocating"
           checked={form.open_to_relocation}
           onChange={(e) => set('open_to_relocation', e.target.checked)}
-        />
-
-        <Field label="Industry">
-          <Select value={form.industry} onChange={(e) => set('industry', e.target.value)}>
-            <option value="">Select an industry…</option>
-            {INDUSTRIES.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Checkbox
-          label="I'm not tied to this industry — open to other industries too"
-          checked={form.open_to_other_industries}
-          onChange={(e) => set('open_to_other_industries', e.target.checked)}
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
