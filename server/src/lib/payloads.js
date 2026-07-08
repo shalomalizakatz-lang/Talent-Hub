@@ -21,6 +21,8 @@ export function parseJobSeekerPayload(body, { allowPipelineStatus = true } = {})
     experience_years: optionalNonNegativeNumber(body.experience_years, 'Experience years'),
     location: optionalString(body.location, 'Location', { maxLength: 200 }),
     open_to_relocation: optionalBoolean(body.open_to_relocation, false),
+    industry: optionalString(body.industry, 'Industry', { maxLength: 200 }),
+    open_to_other_industries: optionalBoolean(body.open_to_other_industries, false),
     desired_salary: optionalNonNegativeNumber(body.desired_salary, 'Desired salary'),
     email: optionalString(body.email, 'Email', { maxLength: 320 }),
     phone: optionalString(body.phone, 'Phone', { maxLength: 50 }),

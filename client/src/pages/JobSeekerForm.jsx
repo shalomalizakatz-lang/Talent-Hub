@@ -6,6 +6,7 @@ import { TagInput } from '../components/TagInput.jsx';
 import { ResumeUpload } from '../components/ResumeUpload.jsx';
 import { getSuggestedSkills } from '../skillSuggestions.js';
 import { PIPELINE_STATUSES, PIPELINE_STATUS_LABELS } from '../constants.js';
+import { INDUSTRIES } from '../industries.js';
 
 const EMPTY = {
   name: '',
@@ -14,6 +15,8 @@ const EMPTY = {
   experience_years: '',
   location: '',
   open_to_relocation: false,
+  industry: '',
+  open_to_other_industries: false,
   desired_salary: '',
   email: '',
   phone: '',
@@ -167,6 +170,23 @@ export function JobSeekerForm() {
           label="Open to relocation"
           checked={form.open_to_relocation}
           onChange={(e) => set('open_to_relocation', e.target.checked)}
+        />
+
+        <Field label="Industry">
+          <Select value={form.industry || ''} onChange={(e) => set('industry', e.target.value)}>
+            <option value="">Select an industry…</option>
+            {INDUSTRIES.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Checkbox
+          label="Not tied to this industry — open to other industries too"
+          checked={form.open_to_other_industries}
+          onChange={(e) => set('open_to_other_industries', e.target.checked)}
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

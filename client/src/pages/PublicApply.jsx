@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client.js';
-import { Field, TextInput, NumberInput, TextArea, Checkbox } from '../components/FormFields.jsx';
+import { Field, TextInput, NumberInput, TextArea, Select, Checkbox } from '../components/FormFields.jsx';
 import { TagInput } from '../components/TagInput.jsx';
 import { PublicShell } from '../components/PublicShell.jsx';
 import { getSuggestedSkills } from '../skillSuggestions.js';
+import { INDUSTRIES } from '../industries.js';
 
 const EMPTY = {
   name: '',
@@ -13,6 +14,8 @@ const EMPTY = {
   experience_years: '',
   location: '',
   open_to_relocation: false,
+  industry: '',
+  open_to_other_industries: false,
   desired_salary: '',
   email: '',
   phone: '',
@@ -87,6 +90,8 @@ export function PublicApply() {
       if (form.experience_years !== '') formData.append('experience_years', form.experience_years);
       formData.append('location', form.location);
       formData.append('open_to_relocation', form.open_to_relocation ? 'true' : 'false');
+      formData.append('industry', form.industry);
+      formData.append('open_to_other_industries', form.open_to_other_industries ? 'true' : 'false');
       if (form.desired_salary !== '') formData.append('desired_salary', form.desired_salary);
       formData.append('email', form.email);
       formData.append('phone', form.phone);
@@ -167,6 +172,23 @@ export function PublicApply() {
           label="I'm open to relocating"
           checked={form.open_to_relocation}
           onChange={(e) => set('open_to_relocation', e.target.checked)}
+        />
+
+        <Field label="Industry">
+          <Select value={form.industry} onChange={(e) => set('industry', e.target.value)}>
+            <option value="">Select an industry…</option>
+            {INDUSTRIES.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
+            ))}
+          </Select>
+        </Field>
+
+        <Checkbox
+          label="I'm not tied to this industry — open to other industries too"
+          checked={form.open_to_other_industries}
+          onChange={(e) => set('open_to_other_industries', e.target.checked)}
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

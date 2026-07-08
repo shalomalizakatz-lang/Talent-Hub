@@ -93,6 +93,8 @@ export function JobSeekerDetail() {
           value={seeker.experience_years != null ? `${seeker.experience_years} years` : null}
         />
         <DetailItem label="Open to relocation" value={seeker.open_to_relocation ? 'Yes' : 'No'} />
+        <DetailItem label="Industry" value={seeker.industry} />
+        <DetailItem label="Open to other industries" value={seeker.open_to_other_industries ? 'Yes' : 'No'} />
         <DetailItem
           label="Desired salary"
           value={seeker.desired_salary != null ? `$${Number(seeker.desired_salary).toLocaleString()}` : null}

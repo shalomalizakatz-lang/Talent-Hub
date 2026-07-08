@@ -16,6 +16,8 @@ const INSERT_COLUMNS = [
   'experience_years',
   'location',
   'open_to_relocation',
+  'industry',
+  'open_to_other_industries',
   'desired_salary',
   'email',
   'phone',
