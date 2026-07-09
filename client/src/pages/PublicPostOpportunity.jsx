@@ -73,10 +73,6 @@ export function PublicPostOpportunity() {
       subtitle="Describe the role and what you're looking for — we'll match it to candidates."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Job title" required>
-          <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
-        </Field>
-
         <Field label="Industry">
           <Select value={form.industry} onChange={(e) => set('industry', e.target.value)}>
             <option value="">Select an industry…</option>
@@ -86,6 +82,10 @@ export function PublicPostOpportunity() {
               </option>
             ))}
           </Select>
+        </Field>
+
+        <Field label="Job title" required>
+          <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

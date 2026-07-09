@@ -79,10 +79,6 @@ export function OpportunityForm() {
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-4 text-xl font-bold text-slate-900">{isEdit ? 'Edit Opportunity' : 'Add Opportunity'}</h1>
       <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <Field label="Title" required>
-          <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
-        </Field>
-
         <Field label="Industry">
           <Select value={form.industry || ''} onChange={(e) => set('industry', e.target.value)}>
             <option value="">Select an industry…</option>
@@ -92,6 +88,10 @@ export function OpportunityForm() {
               </option>
             ))}
           </Select>
+        </Field>
+
+        <Field label="Title" required>
+          <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
