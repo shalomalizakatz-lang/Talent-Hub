@@ -9,7 +9,6 @@ import { INDUSTRIES } from '../industries.js';
 
 const EMPTY = {
   title: '',
-  company: '',
   position_type: '',
   industry: '',
   required_skills: [],
@@ -94,22 +93,13 @@ export function OpportunityForm() {
           <TextInput value={form.title} onChange={(e) => set('title', e.target.value)} required />
         </Field>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Company">
-            <TextInput
-              value={form.company || ''}
-              onChange={(e) => set('company', e.target.value)}
-              placeholder="e.g. Healthcare Group"
-            />
-          </Field>
-          <Field label="Position type">
-            <TextInput
-              value={form.position_type || ''}
-              onChange={(e) => set('position_type', e.target.value)}
-              placeholder="e.g. Nursing Home Administrator"
-            />
-          </Field>
-        </div>
+        <Field label="Position type">
+          <TextInput
+            value={form.position_type || ''}
+            onChange={(e) => set('position_type', e.target.value)}
+            placeholder="e.g. Nursing Home Administrator"
+          />
+        </Field>
 
         <Field label="Minimum experience (years)">
           <NumberInput

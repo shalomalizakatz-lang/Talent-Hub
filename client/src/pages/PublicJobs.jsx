@@ -80,11 +80,7 @@ export function PublicJobs() {
                         <h3 className="font-semibold text-slate-900">{job.title}</h3>
                         <span className="shrink-0 text-xs font-medium text-indigo-600">Apply &rarr;</span>
                       </div>
-                      {(job.company || job.position_type) && (
-                        <p className="text-sm text-slate-500">
-                          {[job.company, job.position_type].filter(Boolean).join(' — ')}
-                        </p>
-                      )}
+                      {job.position_type && <p className="text-sm text-slate-500">{job.position_type}</p>}
                       {job.location && <p className="text-sm text-slate-500">{job.location}</p>}
                       {(job.salary_min != null || job.salary_max != null) && (
                         <p className="mt-1 text-sm text-slate-600">

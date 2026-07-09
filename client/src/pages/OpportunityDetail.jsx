@@ -42,9 +42,7 @@ export function OpportunityDetail() {
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{opportunity.title}</h1>
-          <p className="text-slate-500">
-            {[opportunity.company, opportunity.position_type].filter(Boolean).join(' — ')}
-          </p>
+          {opportunity.position_type && <p className="text-slate-500">{opportunity.position_type}</p>}
         </div>
         <div className="flex items-center gap-2">
           <span
