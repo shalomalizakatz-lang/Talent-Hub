@@ -51,27 +51,23 @@ export function PublicJobs() {
 
       {jobs && jobs.length > 0 && (
         <>
-          {groups.length > 1 && (
-            <div className="mb-4">
-              <Select value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
-                <option value="">All industries</option>
-                {groups.map((g) => (
-                  <option key={g.name} value={g.name}>
-                    {g.name} ({g.jobs.length})
-                  </option>
-                ))}
-              </Select>
-            </div>
-          )}
+          <div className="mb-4">
+            <Select value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
+              <option value="">All industries</option>
+              {groups.map((g) => (
+                <option key={g.name} value={g.name}>
+                  {g.name} ({g.jobs.length})
+                </option>
+              ))}
+            </Select>
+          </div>
 
           <div className="space-y-6">
             {visibleGroups.map((group) => (
               <div key={group.name}>
-                {groups.length > 1 && (
-                  <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
-                    {group.name}
-                  </h2>
-                )}
+                <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  {group.name}
+                </h2>
                 <div className="space-y-3">
                   {group.jobs.map((job) => (
                     <Link
